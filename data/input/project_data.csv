@@ -1,0 +1,16 @@
+project_name,department,planned_cost,actual_cost,planned_finish_date,actual_finish_date,status,risk_level,issue_description,owner
+Cloud Migration Phase 1,IT,250000,310000,2024-03-31,2024-05-15,delayed,high,Vendor delays and scope creep on infrastructure setup,Sarah Chen
+ERP Upgrade,IT,180000,175000,2024-04-30,2024-04-28,completed,low,Minor config issues resolved,James Liu
+Security Audit Program,IT,95000,104000,2024-05-31,2024-06-20,delayed,medium,Resource contention with cloud migration team,Maria Santos
+Data Warehouse Rebuild,IT,320000,298000,2024-06-30,2024-06-30,on_track,low,On schedule and under budget,Kevin Park
+Mobile App Launch,IT,140000,185000,2024-04-15,2024-07-01,at_risk,critical,Design rework required; original vendor terminated,Lisa Wang
+Annual Budget Reconciliation,Finance,45000,44000,2024-03-31,2024-03-29,completed,low,Completed two days early,Robert Kim
+Regulatory Compliance Report,Finance,60000,68000,2024-04-30,2024-05-10,delayed,medium,New regulatory requirements added post-kickoff,Emma Thompson
+Financial System Integration,Finance,210000,255000,2024-05-31,2024-08-15,at_risk,high,Integration complexity underestimated; third-party API issues,David Brown
+Cost Reduction Initiative,Finance,30000,29000,2024-04-15,2024-04-10,completed,low,Delivered savings ahead of plan,Anna Lee
+Vendor Contract Renegotiation,Finance,25000,27000,2024-05-15,2024-05-20,on_track,low,Minor delay due to legal review,Tom Wilson
+Supply Chain Optimization,Operations,175000,192000,2024-05-31,2024-06-30,delayed,high,Supplier disruption in Q1; backup vendor onboarding,Rachel Green
+Warehouse Automation,Operations,400000,390000,2024-07-31,2024-07-31,on_track,medium,On track; minor equipment delays absorbed,Michael Scott
+Quality Management System,Operations,85000,97000,2024-04-30,2024-05-25,delayed,medium,ISO certification scope more extensive than planned,Jennifer Adams
+Logistics Partner Integration,Operations,120000,118000,2024-06-15,2024-06-15,on_track,low,On track and on budget,Chris Johnson
+Fleet Management Upgrade,Operations,65000,82000,2024-03-31,2024-05-01,delayed,high,Hardware procurement delays; fleet managers unavailable,Patricia Davis
