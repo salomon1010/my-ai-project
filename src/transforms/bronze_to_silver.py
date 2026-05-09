@@ -9,20 +9,22 @@ def bronze_to_silver() -> int:
         SELECT
             TRIM(project_name)                                              AS project_name,
             TRIM(department)                                                AS department,
+            CAST(TRY_STRPTIME(start_date, '%Y-%m-%d') AS DATE)             AS start_date,
             TRY_CAST(planned_cost AS DOUBLE)                               AS planned_cost,
-            TRY_CAST(actual_cost AS DOUBLE)                                AS actual_cost,
-            CAST(TRY_STRPTIME(planned_finish_date, '%Y-%m-%d') AS DATE)     AS planned_finish_date,
+            TRY_CAST(actual_cost  AS DOUBLE)                               AS actual_cost,
+            TRY_CAST(revenue      AS DOUBLE)                               AS revenue,
+            CAST(TRY_STRPTIME(planned_finish_date, '%Y-%m-%d') AS DATE)    AS planned_finish_date,
             CAST(TRY_STRPTIME(actual_finish_date,  '%Y-%m-%d') AS DATE)    AS actual_finish_date,
             CASE LOWER(TRIM(status))
-                WHEN 'on track'   THEN 'on_track'
-                WHEN 'on_track'   THEN 'on_track'
-                WHEN 'green'      THEN 'on_track'
-                WHEN 'at risk'    THEN 'at_risk'
-                WHEN 'at_risk'    THEN 'at_risk'
-                WHEN 'amber'      THEN 'at_risk'
-                WHEN 'delayed'    THEN 'delayed'
-                WHEN 'red'        THEN 'delayed'
-                WHEN 'completed'  THEN 'completed'
+                WHEN 'on track'  THEN 'on_track'
+                WHEN 'on_track'  THEN 'on_track'
+                WHEN 'green'     THEN 'on_track'
+                WHEN 'at risk'   THEN 'at_risk'
+                WHEN 'at_risk'   THEN 'at_risk'
+                WHEN 'amber'     THEN 'at_risk'
+                WHEN 'delayed'   THEN 'delayed'
+                WHEN 'red'       THEN 'delayed'
+                WHEN 'completed' THEN 'completed'
                 ELSE LOWER(TRIM(status))
             END                                                             AS status,
             LOWER(TRIM(risk_level))                                         AS risk_level,
@@ -30,7 +32,7 @@ def bronze_to_silver() -> int:
             COALESCE(owner, 'Unassigned')                                   AS owner
         FROM bronze_project_raw
         WHERE project_name IS NOT NULL
-          AND planned_cost IS NOT NULL
+          AND planned_cost  IS NOT NULL
     """)
     count = con.execute("SELECT COUNT(*) FROM silver_project_clean").fetchone()[0]
     con.close()

@@ -2,6 +2,20 @@ import pandas as pd
 import streamlit as st
 
 
+def _period_selector() -> str:
+    """Renders the time-period toggle and returns selected period key."""
+    st.markdown("**Time Period**")
+    period = st.radio(
+        "Time granularity", ["Monthly", "Quarterly", "Annually"],
+        horizontal=True, key="g_period", label_visibility="collapsed"
+    )
+    return period
+
+
+def render_period_selector() -> str:
+    return _period_selector()
+
+
 def render_filter_bar(all_projects: list[dict]) -> list[dict]:
     """Renders the global filter bar and returns the filtered project list."""
     df = pd.DataFrame(all_projects)
@@ -55,6 +69,20 @@ def render_filter_bar(all_projects: list[dict]) -> list[dict]:
                     st.session_state.pop(k, None)
                 st.rerun()
 
+        # Schedule date range
+        if "start_date" in df.columns:
+            df["start_date"] = pd.to_datetime(df["start_date"])
+            min_date = df["start_date"].min().date()
+            max_date = df["start_date"].max().date()
+            date_range = st.date_input(
+                "Project Start Date range",
+                value=(min_date, max_date),
+                min_value=min_date, max_value=max_date,
+                key="g_date_range",
+            )
+        else:
+            date_range = None
+
         # Budget variance range slider
         min_v = float(df["budget_variance_pct"].min())
         max_v = float(df["budget_variance_pct"].max())
@@ -92,6 +120,15 @@ def render_filter_bar(all_projects: list[dict]) -> list[dict]:
         (filtered["budget_variance_pct"] >= budget_range[0]) &
         (filtered["budget_variance_pct"] <= budget_range[1])
     ]
+
+    if date_range and len(date_range) == 2 and "start_date" in filtered.columns:
+        filtered["start_date"] = pd.to_datetime(filtered["start_date"])
+        start_from = pd.Timestamp(date_range[0])
+        start_to   = pd.Timestamp(date_range[1])
+        filtered = filtered[
+            (filtered["start_date"] >= start_from) &
+            (filtered["start_date"] <= start_to)
+        ]
 
     if search:
         filtered = filtered[

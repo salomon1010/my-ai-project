@@ -85,10 +85,11 @@ if st.session_state["pipeline_result"]:
 
     st.divider()
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "📊 Dashboard",
         "📋 Projects",
         "⚠️ Issues & Recommendations",
+        "💰 Financial Analysis",
         "🤖 AI Report",
         "📄 Export",
     ])
@@ -141,8 +142,82 @@ if st.session_state["pipeline_result"]:
         from app.components.issues_panel import render_issues_panel
         render_issues_panel(filtered_kpi)
 
-    # ── TAB 4: AI Report ───────────────────────────────────────────────────────
+    # ── TAB 4: Financial Analysis ──────────────────────────────────────────────
     with tab4:
+        st.subheader("Financial Analysis — Cost Management")
+
+        from app.components.financial_charts import (
+            render_financial_summary_cards,
+            render_revenue_expense_profit,
+            render_planned_vs_actual,
+            render_cumulative_cost,
+            render_dept_financials,
+            render_roi_by_project,
+            render_profit_margin_pie,
+        )
+        from app.components.filter_bar import render_period_selector
+
+        render_financial_summary_cards(kpi)
+        st.divider()
+
+        period = render_period_selector()
+        period_map = {
+            "Monthly":   ("financial_by_month",   "Monthly"),
+            "Quarterly": ("financial_by_quarter", "Quarterly"),
+            "Annually":  ("financial_by_year",    "Annual"),
+        }
+        data_key, label = period_map[period]
+        fin_data = kpi.get(data_key, [])
+
+        col_a, col_b = st.columns(2)
+        with col_a:
+            render_revenue_expense_profit(fin_data, label)
+        with col_b:
+            render_planned_vs_actual(fin_data, label)
+
+        render_cumulative_cost(fin_data, label)
+
+        st.divider()
+
+        col_c, col_d = st.columns(2)
+        with col_c:
+            render_dept_financials(kpi.get("financial_by_dept", []))
+        with col_d:
+            render_profit_margin_pie(kpi.get("financial_by_dept", []))
+
+        st.divider()
+        render_roi_by_project(kpi.get("top_roi_projects", []))
+
+        st.divider()
+        st.subheader("Project-Level Cost Detail")
+        if filtered_projects:
+            import pandas as _pd2
+            cost_df = _pd2.DataFrame(filtered_projects)
+            cost_cols = [c for c in [
+                "project_name", "department", "start_date",
+                "planned_cost", "actual_cost", "revenue", "profit", "roi_pct",
+                "budget_variance_pct", "status"
+            ] if c in cost_df.columns]
+            st.dataframe(
+                cost_df[cost_cols],
+                use_container_width=True,
+                column_config={
+                    "project_name":        st.column_config.TextColumn("Project"),
+                    "department":          st.column_config.TextColumn("Dept"),
+                    "start_date":          st.column_config.DateColumn("Start"),
+                    "planned_cost":        st.column_config.NumberColumn("Planned $", format="$%.0f"),
+                    "actual_cost":         st.column_config.NumberColumn("Actual $",  format="$%.0f"),
+                    "revenue":             st.column_config.NumberColumn("Revenue $", format="$%.0f"),
+                    "profit":              st.column_config.NumberColumn("Profit $",  format="$%.0f"),
+                    "roi_pct":             st.column_config.NumberColumn("ROI %",     format="%.1f%%"),
+                    "budget_variance_pct": st.column_config.NumberColumn("Budget Var %", format="%.1f%%"),
+                    "status":              st.column_config.TextColumn("Status"),
+                },
+                hide_index=True,
+            )
+
+    # ── TAB 5: AI Report ───────────────────────────────────────────────────────
+    with tab5:
         st.subheader("AI Executive Summary")
 
         def on_generate():
@@ -155,8 +230,8 @@ if st.session_state["pipeline_result"]:
         from app.components.ai_summary import render_ai_summary
         render_ai_summary(result.get("ai_report"), on_generate)
 
-    # ── TAB 5: Export ──────────────────────────────────────────────────────────
-    with tab5:
+    # ── TAB 6: Export ──────────────────────────────────────────────────────────
+    with tab6:
         st.subheader("Export Report")
         st.info("Generate an AI report first (AI Report tab), then export to PDF.")
 

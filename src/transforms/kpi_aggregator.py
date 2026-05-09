@@ -73,6 +73,63 @@ def compute_kpi_summary() -> dict:
 
     all_projects = con.execute("SELECT * FROM gold_project_kpi").df().to_dict("records")
 
+    # ── Financial summaries ────────────────────────────────────────────────────
+    fin_totals = con.execute("""
+        SELECT
+            SUM(revenue)     AS total_revenue,
+            SUM(actual_cost) AS total_expense,
+            SUM(profit)      AS total_profit,
+            ROUND(SUM(profit) / NULLIF(SUM(actual_cost),0) * 100, 2) AS overall_roi_pct
+        FROM gold_project_kpi
+    """).fetchone()
+
+    financial_by_month = con.execute("""
+        SELECT period_month AS period,
+               SUM(revenue)     AS revenue,
+               SUM(actual_cost) AS expense,
+               SUM(profit)      AS profit,
+               SUM(planned_cost) AS planned_cost
+        FROM gold_project_kpi
+        GROUP BY period_month ORDER BY period_month
+    """).df().to_dict("records")
+
+    financial_by_quarter = con.execute("""
+        SELECT period_quarter AS period,
+               SUM(revenue)     AS revenue,
+               SUM(actual_cost) AS expense,
+               SUM(profit)      AS profit,
+               SUM(planned_cost) AS planned_cost
+        FROM gold_project_kpi
+        GROUP BY period_quarter, start_year, start_quarter
+        ORDER BY start_year, start_quarter
+    """).df().to_dict("records")
+
+    financial_by_year = con.execute("""
+        SELECT period_year AS period,
+               SUM(revenue)     AS revenue,
+               SUM(actual_cost) AS expense,
+               SUM(profit)      AS profit,
+               SUM(planned_cost) AS planned_cost
+        FROM gold_project_kpi
+        GROUP BY period_year ORDER BY period_year
+    """).df().to_dict("records")
+
+    financial_by_dept = con.execute("""
+        SELECT department,
+               SUM(revenue)     AS revenue,
+               SUM(actual_cost) AS expense,
+               SUM(profit)      AS profit,
+               ROUND(SUM(profit)/NULLIF(SUM(actual_cost),0)*100,2) AS roi_pct
+        FROM gold_project_kpi
+        GROUP BY department ORDER BY revenue DESC
+    """).df().to_dict("records")
+
+    top_roi = con.execute("""
+        SELECT project_name, department, revenue, actual_cost, profit, roi_pct
+        FROM gold_project_kpi
+        ORDER BY roi_pct DESC LIMIT 5
+    """).df().to_dict("records")
+
     con.close()
 
     return {
@@ -89,4 +146,14 @@ def compute_kpi_summary() -> dict:
         "late_projects": late_projects,
         "issues_by_dept": issues_by_dept,
         "all_projects": all_projects,
+        # Financial
+        "total_revenue":        fin_totals[0] or 0,
+        "total_expense":        fin_totals[1] or 0,
+        "total_profit":         fin_totals[2] or 0,
+        "overall_roi_pct":      fin_totals[3] or 0,
+        "financial_by_month":   financial_by_month,
+        "financial_by_quarter": financial_by_quarter,
+        "financial_by_year":    financial_by_year,
+        "financial_by_dept":    financial_by_dept,
+        "top_roi_projects":     top_roi,
     }
