@@ -58,6 +58,33 @@ if st.session_state["pipeline_result"]:
     result = st.session_state["pipeline_result"]
     kpi    = result["kpi_summary"]
 
+    # ── Global analytics filter bar (drives all tabs) ─────────────────────────
+    from app.components.filter_bar import render_filter_bar
+    filtered_projects = render_filter_bar(kpi["all_projects"])
+
+    # Build a filtered KPI dict so charts and panels reflect filter state
+    import pandas as _pd
+    filtered_kpi = dict(kpi)
+    filtered_kpi["all_projects"] = filtered_projects
+    if filtered_projects:
+        fdf = _pd.DataFrame(filtered_projects)
+        total_f = len(fdf)
+        filtered_kpi["total_projects"]         = total_f
+        filtered_kpi["pct_on_track"]           = round(len(fdf[fdf.status=="on_track"])  /total_f*100,1)
+        filtered_kpi["pct_at_risk"]            = round(len(fdf[fdf.status=="at_risk"])   /total_f*100,1)
+        filtered_kpi["pct_delayed"]            = round(len(fdf[fdf.status=="delayed"])   /total_f*100,1)
+        filtered_kpi["pct_completed"]          = round(len(fdf[fdf.status=="completed"]) /total_f*100,1)
+        filtered_kpi["total_budget_variance"]  = float(fdf["budget_variance"].sum()) if "budget_variance" in fdf else kpi["total_budget_variance"]
+        planned = fdf["planned_cost"].sum() if "planned_cost" in fdf.columns else 1
+        filtered_kpi["total_budget_variance_pct"] = round(filtered_kpi["total_budget_variance"] / planned * 100, 2) if planned else 0
+        late_f = fdf[fdf.schedule_delay_days > 0]
+        filtered_kpi["avg_schedule_delay_days"] = round(late_f["schedule_delay_days"].mean(), 1) if len(late_f) else 0
+        filtered_kpi["over_budget_projects"]   = fdf[fdf.is_over_budget==True].to_dict("records") if "is_over_budget" in fdf.columns else []
+        filtered_kpi["late_projects"]          = late_f[["project_name","schedule_delay_days","owner"]].to_dict("records") if len(late_f) else []
+        filtered_kpi["top_3_risks"]            = fdf.nlargest(3, "budget_variance_pct")[["project_name","risk_level","budget_variance_pct"]].to_dict("records") if "budget_variance_pct" in fdf.columns else []
+
+    st.divider()
+
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "📊 Dashboard",
         "📋 Projects",
@@ -70,7 +97,7 @@ if st.session_state["pipeline_result"]:
     with tab1:
         st.subheader("Balanced Scorecard")
         from app.components.kpi_cards import render_kpi_cards
-        render_kpi_cards(kpi)
+        render_kpi_cards(filtered_kpi)
 
         st.divider()
 
@@ -85,34 +112,34 @@ if st.session_state["pipeline_result"]:
 
         col1, col2, col3 = st.columns(3)
         with col1:
-            render_status_donut(kpi["all_projects"])
+            render_status_donut(filtered_projects)
         with col2:
-            render_risk_bar(kpi["all_projects"])
+            render_risk_bar(filtered_projects)
         with col3:
-            render_dept_issues(kpi["issues_by_dept"])
+            render_dept_issues(filtered_kpi["issues_by_dept"])
 
         st.divider()
 
         col4, col5 = st.columns(2)
         with col4:
-            render_budget_variance_chart(kpi["all_projects"])
+            render_budget_variance_chart(filtered_projects)
         with col5:
-            render_schedule_delay_chart(kpi["all_projects"])
+            render_schedule_delay_chart(filtered_projects)
 
         st.divider()
-        render_dept_performance(kpi["all_projects"])
+        render_dept_performance(filtered_projects)
 
     # ── TAB 2: Projects ────────────────────────────────────────────────────────
     with tab2:
         st.subheader("Project Portfolio")
         from app.components.project_table import render_project_table
-        render_project_table(kpi["all_projects"])
+        render_project_table(filtered_projects)
 
     # ── TAB 3: Issues & Recommendations ───────────────────────────────────────
     with tab3:
         st.subheader("Issues, Risks & Recommendations")
         from app.components.issues_panel import render_issues_panel
-        render_issues_panel(kpi)
+        render_issues_panel(filtered_kpi)
 
     # ── TAB 4: AI Report ───────────────────────────────────────────────────────
     with tab4:
