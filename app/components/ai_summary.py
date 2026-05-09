@@ -8,7 +8,11 @@ def render_ai_summary(ai_report: str, on_generate) -> None:
         if st.button("Generate Report", type="primary"):
             on_generate()
 
-    if not ai_report or ai_report.startswith("["):
+    if not ai_report:
+        st.info("Click 'Generate Report' to create an AI-written executive summary.")
+    elif ai_report.startswith("[ERROR:"):
+        st.error(ai_report)
+    elif ai_report.startswith("["):
         st.info("Click 'Generate Report' to create an AI-written executive summary.")
     else:
         from datetime import datetime
