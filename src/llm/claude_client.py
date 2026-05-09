@@ -7,13 +7,22 @@ load_dotenv()
 
 FALLBACK_MESSAGE = (
     "[Report generation unavailable. "
-    "Please check that ANTHROPIC_API_KEY is set in your .env file and try again.]"
+    "Please check that ANTHROPIC_API_KEY is set in your .env file or Streamlit secrets and try again.]"
 )
 
 
+def _get_secret(key: str, default: str = "") -> str:
+    """Read from Streamlit secrets (cloud) or environment variables (local)."""
+    try:
+        import streamlit as st
+        return st.secrets.get(key, os.getenv(key, default))
+    except Exception:
+        return os.getenv(key, default)
+
+
 def generate_report(prompt: str) -> str:
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    model = os.getenv("MODEL_ID", "claude-haiku-4-5")
+    api_key = _get_secret("ANTHROPIC_API_KEY")
+    model = _get_secret("MODEL_ID") or "claude-haiku-4-5"
 
     if not api_key:
         logger.warning("ANTHROPIC_API_KEY not set — returning fallback message")
